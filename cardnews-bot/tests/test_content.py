@@ -89,3 +89,12 @@ def test_pending_skips_folders_already_rendered_in_done_roots(content_root, tmp_
     assert [p.name for p in content.pending(content_root, tmp_path / "out", [drafts])] == ["20261117-b"]
     monkeypatch.setenv("DRAFTS_DIR", str(drafts))  # Actions에서는 환경변수로 넘긴다
     assert [p.name for p in content.pending(content_root, tmp_path / "out")] == ["20261117-b"]
+
+
+def test_long_highlight_is_rejected(content_root):
+    import json
+    d = make_content(content_root, "20261116-a")
+    card = json.loads((d / "card.json").read_text(encoding="utf-8"))
+    card["slides"][0]["highlight"] = "월 최대 20만 원"  # 9자: 큰 글씨라 '원'만 다음 줄에 남는다
+    (d / "card.json").write_text(json.dumps(card, ensure_ascii=False), encoding="utf-8")
+    assert any("highlight" in e for e in validate_content.check(d))

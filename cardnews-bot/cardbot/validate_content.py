@@ -45,6 +45,8 @@ def check(folder: Path) -> list[str]:
             errs.append(f"슬라이드 {i}: heading이 비어 있습니다")
         if len(s.heading) > 60:
             errs.append(f"슬라이드 {i}: heading이 너무 깁니다 ({len(s.heading)}자, 60자 이하)")
+        if len(s.highlight) > 8:
+            errs.append(f"슬라이드 {i}: highlight가 너무 깁니다 ({len(s.highlight)}자, 8자 이하). 큰 글씨라 줄바꿈되면 한 글자만 남습니다 (예: '월 20만 원')")
         if len(s.body) > 200:
             errs.append(f"슬라이드 {i}: body가 너무 깁니다 ({len(s.body)}자, 200자 이하)")
     if len(card.threads_text) > 500:
