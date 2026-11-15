@@ -1,0 +1,121 @@
+"""렌더링된 시안(이미지·영상)을 인스타(카드뉴스·릴스)·스레드·유튜브 쇼츠에 직접 올린다 (각 서비스 API 토큰 사용).
+
+네이버 블로그·클립은 여기서 올리지 않는다. Uplika를 쓰는 루틴 ②가 published.json 의 영상·이미지 주소를 받아 올린다.
+LLM(API)은 쓰지 않는다.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import re
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from .bgm import with_credit
+from .config import Settings
+from .hosting import make_host
+from .llm import CardNews, TopicIdea
+from .publishers import make_publishers
+
+log = logging.getLogger(__name__)
+KST = timezone(timedelta(hours=9))
+
+
+def caption_hashtags(caption: str) -> list[str]:
+    """인스타 캡션에서 해시태그를 순서대로, 중복 없이 뽑는다."""
+    tags: list[str] = []
+    for t in re.findall(r"#[^\s#]+", caption):
+        if t not in tags:
+            tags.append(t)
+    return tags
+
+
+def _meta(folder: Path) -> dict:
+    p = folder / "published.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+
+
+def is_done(folder: Path, platforms: list[str]) -> bool:
+    return all(p in _meta(folder).get("posts", {}) for p in platforms)
+
+
+def latest_unpublished(root: Path, s: Settings, now: datetime | None = None, max_age_days: int = 1) -> Path | None:
+    """가장 최근에 렌더링된 폴더 중 아직 다 안 올린 것. 너무 오래된 폴더(날짜 기준)는 늦게 올리지 않는다."""
+    today = (now or datetime.now(KST)).astimezone(KST).date()
+    for d in sorted((x for x in root.iterdir() if x.is_dir()), reverse=True) if root.exists() else []:
+        if not (d / "reel.mp4").exists() or not (d / "slide_01.jpg").exists():
+            continue
+        try:
+            made = datetime.strptime(d.name[:8], "%Y%m%d").date()
+        except ValueError:
+            continue
+        if (today - made).days > max_age_days:
+            return None  # 최신 폴더가 이미 오래됐다면 그보다 옛것은 볼 필요 없다
+        if not is_done(d, s.platforms):
+            return d
+        return None  # 최신 폴더는 이미 다 올렸다
+    return None
+
+
+def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, publishers=None) -> dict:
+    CardNews.model_validate_json((folder / "card.json").read_text(encoding="utf-8"))
+    topic = TopicIdea.model_validate_json((folder / "topic.json").read_text(encoding="utf-8"))
+    caption = (folder / "caption.txt").read_text(encoding="utf-8").strip()
+    threads_text = (folder / "threads.txt").read_text(encoding="utf-8").strip()[:500]
+    # CC BY 곡의 출처 표기는 영상이 올라가는 곳(인스타 릴스·유튜브)의 설명에만 붙인다. 스레드에는 붙이지 않는다.
+    caption = with_credit(caption, folder, 2200)
+    images = sorted(folder.glob("slide_*.jpg"))
+    reel = folder / "reel.mp4"
+
+    if dry_run:
+        pubs = publishers if publishers is not None else make_publishers(s)
+        plan = {"folder": folder.name, "platforms": [p.name for p in pubs], "images": len(images), "reel": reel.exists(),
+                "caption_chars": len(caption), "threads_chars": len(threads_text), "title": topic.title,
+                "already": sorted(_meta(folder).get("posts", {}))}
+        log.info("(시험 실행, 실제로 올리지 않음) %s", json.dumps(plan, ensure_ascii=False))
+        return plan
+
+    meta = _meta(folder)
+    meta_path = folder / "published.json"
+    save = lambda: meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")  # noqa: E731
+
+    urls = meta.get("image_urls") or []
+    if not urls or not all(u.isascii() for u in urls):  # 비ASCII URL은 Meta가 가져오지 못한다
+        host = host or make_host(s)
+        meta["image_urls"] = host.upload(images, folder.name)
+        save()
+    pubs = publishers if publishers is not None else make_publishers(s)
+    pending = [p for p in pubs if p.name not in meta.get("posts", {})]
+    if any(getattr(p, "needs_video", False) for p in pending) and not meta.get("video_urls") and reel.exists():
+        host = host or make_host(s)
+        video_url, cover_url = host.upload([reel, folder / "reel_cover.jpg"], folder.name)
+        meta["video_urls"] = host.candidates(video_url)
+        meta["reel_cover_url"] = cover_url
+        save()
+    assets = {k: meta.get(k) for k in ("image_urls", "video_urls", "reel_cover_url")}
+    assets["video_path"] = str(reel) if reel.exists() else None  # 유튜브는 파일을 직접 올린다
+    assets["title"] = topic.title
+    assets["hashtags"] = caption_hashtags(caption)
+
+    failures = []
+    for pub in pubs:
+        if pub.name in meta.get("posts", {}):
+            log.info("%s: 이미 게시됨, 건너뜀", pub.name)
+            continue
+        text = threads_text if pub.name == "threads" else caption
+        try:
+            res = pub.publish(assets, text)
+        except Exception as e:
+            log.error("%s 게시 실패: %s", pub.name, e)
+            meta.setdefault("errors", {})[pub.name] = str(e)
+            failures.append(f"{pub.name}: {e}")
+            save()
+            continue
+        log.info("%s 게시 완료: %s", pub.name, res.permalink or res.media_id)
+        meta.setdefault("posts", {})[pub.name] = {"media_id": res.media_id, "permalink": res.permalink}
+        meta.get("errors", {}).pop(pub.name, None)
+        save()
+    meta["failures"] = failures
+    save()
+    return meta

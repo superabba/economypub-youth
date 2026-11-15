@@ -7,12 +7,17 @@
 Claude 루틴 ① (KST 10:40)   웹 검색으로 소재를 고르고 원고를 content/<날짜-주제>/ 에 JSON·글로 올림   ← API 키 대신 Claude 루틴이 글쓰기를 맡음
         │ push (main, content/**)
         ▼
-GitHub Actions (render.yml)   원고 → 카드 이미지 + 릴스 영상(여성 내레이션·배경음악·스타일) → drafts 브랜치   ← 키 없이 돈다
+Actions: render.yml          원고 → 카드 이미지 + 릴스 영상(여성 내레이션·배경음악·스타일) → drafts 브랜치      ← 키 없이 돈다
         ▼
-(2단계) Claude 루틴 ② (KST 11:30)   Uplika로 인스타·스레드·유튜브 쇼츠·네이버 블로그·네이버 클립 발행
+Actions: publish.yml (KST 11:30)   인스타(카드뉴스·릴스)·스레드·유튜브 쇼츠에 각 서비스 토큰으로 직접 게시 → published.json 기록
+        ▼
+Claude 루틴 ② (KST 11:50)   Uplika로 네이버 블로그·네이버 클립 게시 (published.json 의 영상·이미지 주소 사용)   ← routine/publish_naver.md
 ```
-- 1단계(현재): 2단계 없이 **시안(이미지·영상)까지만** 만들어 API 없이 도는지 확인한다.
-- `cardnews-bot/` 는 기존 봇의 렌더링 부분(카드 이미지, 릴스 엔진, 배경음악)만 복사한 것이다. LLM·트렌드 수집·게시 코드는 뺐다.
+- **게시 방식은 기존 카드뉴스 봇과 같다**: 인스타·스레드·유튜브는 Actions가 토큰으로 직접 올리고, 네이버 블로그·클립만 Uplika(루틴)가 올린다.
+- `publish.yml` 은 기본이 **시험 실행**(올리지 않고 무엇을 올릴지만 출력)이다. 저장소 변수 `AUTO_PUBLISH=true` 를 넣어야 예약 실행이 실제로 올린다. 수동 실행은 `dry_run` 입력을 따른다.
+- 필요한 Secrets: `IG_USER_ID`, `IG_ACCESS_TOKEN`, `THREADS_USER_ID`, `THREADS_ACCESS_TOKEN`, `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN` (my-site 와 같은 계정이면 같은 값). **LLM(API) 키는 넣지 않는다.**
+- 선택 Variables: `PLATFORMS`(기본 instagram,reels,threads + 유튜브 인증값이 있으면 youtube), `YOUTUBE_PRIVACY`(기본 private), `AUTO_PUBLISH`.
+- `cardnews-bot/` 는 기존 봇의 렌더링·게시 부분(카드 이미지, 릴스 엔진, 배경음악, 인스타·스레드·유튜브 게시)만 복사한 것이다. LLM·트렌드 수집 코드는 뺐다.
 - 스타일은 직전 두 편과 다르게(`caption-news`, `chalkboard`, `swiss-motion`) 돌린다. 검증 스크립트가 막는다.
 
 ## API 없이 돈다는 것을 확인하는 방법

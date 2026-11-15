@@ -7,7 +7,11 @@ import logging
 import sys
 from pathlib import Path
 
+from pathlib import Path as _P
+
 from . import content
+from .config import Settings
+from . import publish as pub
 
 
 def main() -> int:
@@ -16,12 +20,26 @@ def main() -> int:
     r = sub.add_parser("render", help="원고를 이미지·영상으로 만든다")
     r.add_argument("folder", nargs="?", default="", help="content/ 안의 폴더 이름 (비우면 아직 안 만든 폴더 전부)")
     sub.add_parser("pending", help="아직 영상이 없는 원고 폴더를 보여 준다")
+    q = sub.add_parser("publish", help="렌더링된 시안을 인스타·스레드·유튜브 쇼츠에 올린다 (토큰 사용, LLM 없음)")
+    q.add_argument("folder", nargs="?", default="", help="시안 폴더 경로. --latest 와 같이 쓰지 않는다")
+    q.add_argument("--latest", action="store_true", help="--dir 안에서 가장 최근의 아직 안 올린 폴더")
+    q.add_argument("--dir", default="", help="--latest 가 찾아볼 시안 모음 폴더 (예: ../drafts)")
+    q.add_argument("--dry-run", action="store_true", help="올리지 않고 무엇을 올릴지만 보여 준다")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     if a.cmd == "pending":
         for d in content.pending():
             print(d.name)
         return 0
+    if a.cmd == "publish":
+        s = Settings.load()
+        folder = _P(a.folder) if a.folder else (pub.latest_unpublished(_P(a.dir), s) if a.latest else None)
+        if not folder:
+            print("올릴 시안이 없습니다")
+            return 0
+        meta = pub.publish_folder(folder, s, dry_run=a.dry_run)
+        print(f"완료: {folder.name}")
+        return 1 if (not a.dry_run and meta.get("failures")) else 0
     targets = [content.CONTENT_ROOT / a.folder] if a.folder else content.pending()
     if not targets:
         print("만들 원고가 없습니다")

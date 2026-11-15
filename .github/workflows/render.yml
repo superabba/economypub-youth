@@ -18,7 +18,7 @@ permissions:
   contents: write # 결과를 drafts 브랜치에 저장
 
 concurrency:
-  group: render
+  group: youth # 렌더링과 게시가 drafts 브랜치를 동시에 건드리지 않게 한 줄로 세운다
   cancel-in-progress: false
 
 jobs:
