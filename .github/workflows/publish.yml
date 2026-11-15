@@ -42,10 +42,10 @@ jobs:
       YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
       # --- Variables (비우면 기본값) ---
       PLATFORMS: ${{ vars.PLATFORMS }} # 기본 instagram,reels,threads (+ 유튜브 인증값이 있으면 youtube 자동)
-      YOUTUBE_PRIVACY: ${{ vars.YOUTUBE_PRIVACY }} # 기본 private, 공개는 public
+      YOUTUBE_PRIVACY: ${{ secrets.YOUTUBE_PRIVACY || vars.YOUTUBE_PRIVACY }} # my-site 동기화가 Secrets 로 복사하므로 Secrets 를 먼저 읽는다 # 기본 private, 공개는 public
       YOUTUBE_CATEGORY: ${{ vars.YOUTUBE_CATEGORY }}
       YOUTUBE_SYNTHETIC: ${{ vars.YOUTUBE_SYNTHETIC }}
-      YOUTUBE_CHANNEL_ID: ${{ vars.YOUTUBE_CHANNEL_ID }}
+      YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID || vars.YOUTUBE_CHANNEL_ID }} # my-site 동기화가 Secrets 로 복사하므로 Secrets 를 먼저 읽는다
       # --- 이미지·영상 주소 호스팅: 이 (공개) 저장소의 drafts 브랜치 ---
       IMAGE_HOSTING: github
       GITHUB_TOKEN: ${{ github.token }}
