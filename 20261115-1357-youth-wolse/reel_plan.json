@@ -1,0 +1,24 @@
+{
+  "style": "chalkboard",
+  "label": "칠판 수업",
+  "reason": "신청 요건을 차근차근 짚는 안내형 주제",
+  "duration": 42.774916666666655,
+  "fps": 30,
+  "rate": "+0%",
+  "music": {
+    "mood": "warm",
+    "track": "warm/kevin-macleod-backed-vibes-clean.m4a",
+    "credit": "🎵 Backed Vibes Clean - Kevin MacLeod (CC BY 3.0, 편집) http://freemusicarchive.org/music/Kevin_MacLeod/Jazz_Sampler/Backed_Vibes_Clean_1973"
+  },
+  "narration": [
+    "청년월세 지원, 다음 신청 전에 요건부터 확인해 볼게요.",
+    "대상은 부모와 따로 사는 무주택 만 19세부터 34세 청년이에요.",
+    "청년 가구는 중위소득 60퍼센트 이하, 자산은 1억 2천 2백만 원 이하예요.",
+    "부모를 포함한 원가구는 중위소득 100퍼센트 이하여야 해요.",
+    "월 최대 20만 원씩, 최장 24개월까지 생애 한 번 지원돼요.",
+    "올해 접수는 3월 30일부터 5월 29일까지였고, 신청처는 복지로예요.",
+    "다음 모집 일정은 아직 확인 전이라 공식 공고를 기다려 주세요.",
+    "저장해 두고 공고가 뜰 때 다시 꺼내 보세요."
+  ],
+  "cards": []
+}
