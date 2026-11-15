@@ -78,3 +78,14 @@ def test_render_folder_end_to_end(content_root, tmp_path, monkeypatch):
     for name in ("slide_01.jpg", "reel.mp4", "reel_cover.jpg", "music.json", "caption.txt", "threads.txt", "blog.md"):
         assert (out / name).exists(), name
     assert (out / "reel.mp4").stat().st_size > 10_000
+
+
+def test_pending_skips_folders_already_rendered_in_done_roots(content_root, tmp_path, monkeypatch):
+    make_content(content_root, "20261116-a")
+    make_content(content_root, "20261117-b", style="chalkboard", keyword="b")
+    drafts = tmp_path / "drafts"
+    (drafts / "20261116-a").mkdir(parents=True)
+    (drafts / "20261116-a" / "reel.mp4").write_bytes(b"x")
+    assert [p.name for p in content.pending(content_root, tmp_path / "out", [drafts])] == ["20261117-b"]
+    monkeypatch.setenv("DRAFTS_DIR", str(drafts))  # Actions에서는 환경변수로 넘긴다
+    assert [p.name for p in content.pending(content_root, tmp_path / "out")] == ["20261117-b"]

@@ -71,9 +71,16 @@ def render_folder(src: Path, out_root: Path = OUT_ROOT) -> Path:
     return out
 
 
-def pending(content_root: Path = CONTENT_ROOT, out_root: Path = OUT_ROOT) -> list[Path]:
-    """원고는 있는데 아직 영상이 없는 폴더."""
+def done_roots() -> list[Path]:
+    """이미 렌더링된 결과가 쌓여 있는 곳 (Actions에서는 drafts 브랜치 작업 폴더, 환경변수 DRAFTS_DIR)."""
+    d = os.environ.get("DRAFTS_DIR")
+    return [Path(d)] if d else []
+
+
+def pending(content_root: Path = CONTENT_ROOT, out_root: Path = OUT_ROOT, done: list[Path] | None = None) -> list[Path]:
+    """원고는 있는데 아직 영상이 없는 폴더. out_root 와 done(이미 만든 결과 폴더들)에 reel.mp4 가 있으면 건너뛴다."""
     if not content_root.exists():
         return []
+    roots = [out_root, *(done_roots() if done is None else done)]
     return [d for d in sorted(content_root.iterdir())
-            if d.is_dir() and (d / "card.json").exists() and not (out_root / d.name / "reel.mp4").exists()]
+            if d.is_dir() and (d / "card.json").exists() and not any((r / d.name / "reel.mp4").exists() for r in roots)]

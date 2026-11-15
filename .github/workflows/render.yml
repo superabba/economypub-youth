@@ -4,7 +4,7 @@ name: 시안 렌더링 (API 없이)
 
 on:
   push:
-    branches: [main]
+    branches: [main, "claude/**"] # 루틴이 main 에 직접 못 올리면 claude/ 브랜치로 올린다 (렌더링 뒤 main 에 합친다)
     paths: ["content/**"]
   workflow_dispatch:
     inputs:
@@ -78,16 +78,9 @@ jobs:
           done
           [ -n "$ok" ] || { echo "::error::edge-tts 목소리를 만들 수 없습니다"; exit 1; }
 
-      - name: 렌더링
-        env:
-          FOLDER: ${{ inputs.folder }}
-        run: python -m cardbot render $FOLDER
-
-      - name: 결과를 drafts 브랜치에 저장
+      - name: drafts 브랜치 준비 (이미 만든 시안은 다시 만들지 않는다)
         working-directory: .
         run: |
-          shopt -s nullglob
-          if [ -z "$(ls -A out 2>/dev/null)" ]; then echo "새로 만든 결과 없음"; exit 0; fi
           git config --global user.name "youth-bot"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git fetch --depth=1 origin "$DRAFTS_BRANCH:$DRAFTS_BRANCH"; then
@@ -96,6 +89,17 @@ jobs:
             git worktree add --orphan -b "$DRAFTS_BRANCH" drafts
             printf '# 시안 브랜치\n\n자동 렌더링 결과(이미지·영상)가 폴더별로 쌓입니다.\n' > drafts/README.md
           fi
+          echo "DRAFTS_DIR=$GITHUB_WORKSPACE/drafts" >> "$GITHUB_ENV"
+
+      - name: 렌더링
+        env:
+          FOLDER: ${{ inputs.folder }}
+        run: python -m cardbot render $FOLDER
+
+      - name: 결과를 drafts 브랜치에 저장
+        working-directory: .
+        run: |
+          if [ -z "$(ls -A out 2>/dev/null)" ]; then echo "새로 만든 결과 없음"; exit 0; fi
           cp -r out/* drafts/
           git -C drafts add -A
           git -C drafts diff --cached --quiet && { echo "변경 없음"; exit 0; }
@@ -106,6 +110,19 @@ jobs:
             sleep $((i * 5))
           done
           echo "::error::drafts 브랜치 푸시 실패"; exit 1
+
+      - name: claude/ 브랜치로 올라온 원고를 main 에 합치기
+        if: github.event_name == 'push' && github.ref_name != 'main'
+        working-directory: .
+        run: |
+          git fetch --depth=1 origin main
+          git checkout -B main origin/main
+          git checkout "$GITHUB_SHA" -- content
+          git add content
+          git diff --cached --quiet && { echo "합칠 변경 없음"; exit 0; }
+          git commit -m "원고: ${GITHUB_REF_NAME} (렌더링 성공 후 main 에 합침)"
+          git push origin main
+          git push origin --delete "$GITHUB_REF_NAME" || true
 
       - uses: actions/upload-artifact@v4
         if: always()
