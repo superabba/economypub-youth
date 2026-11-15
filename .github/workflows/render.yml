@@ -1,0 +1,116 @@
+# 원고(content/) → 카드 이미지·릴스 영상(out/) 만들기. LLM(API)은 쓰지 않는다.
+# 원고는 Claude 루틴이 content/<날짜-주제>/ 에 JSON으로 올린다 (routine/write_content.md 참고).
+name: 시안 렌더링 (API 없이)
+
+on:
+  push:
+    branches: [main]
+    paths: ["content/**"]
+  workflow_dispatch:
+    inputs:
+      folder:
+        description: "content/ 안의 폴더 이름. 비우면 아직 영상이 없는 폴더 전부"
+        required: false
+  schedule:
+    - cron: "50 2 * * *" # KST 11:50 예비 (push로 안 돌았을 때만 영상이 없는 폴더를 만든다)
+
+permissions:
+  contents: write # 결과를 drafts 브랜치에 저장
+
+concurrency:
+  group: render
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: cardnews-bot
+    env:
+      DRAFTS_BRANCH: drafts
+      PLAYWRIGHT_CHROME: /usr/bin/google-chrome
+      REELS_VOICE: ${{ vars.REELS_VOICE }} # 기본 ko-KR-SunHiNeural
+      REELS_VOICE_RATE: ${{ vars.REELS_VOICE_RATE }} # 기본 +0%
+      BRAND_HANDLE: ${{ vars.BRAND_HANDLE }}
+      CARD_THEME: ${{ vars.CARD_THEME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: LLM API 키가 환경에 없는지 확인 (이 저장소는 API 없이 돌아가야 한다)
+        working-directory: .
+        run: |
+          if env | grep -E '^(ANTHROPIC|GEMINI|OPENAI|GOOGLE|SHORTS_GEMINI)[A-Z_]*API_KEY='; then
+            echo "::error::LLM API 키가 환경에 들어와 있습니다. 이 저장소에는 키를 두지 않습니다"; exit 1
+          fi
+          echo "LLM API 키 없음 확인"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: cardnews-bot/requirements.txt
+
+      - name: 의존성 설치
+        run: |
+          pip install -r requirements.txt
+          pip install -U edge-tts # Microsoft 쪽 변경에 맞춰 자주 고쳐져서 항상 최신으로
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: cardnews-bot/reelstudio/package-lock.json
+
+      - name: 영상 렌더링 도구 설치
+        working-directory: cardnews-bot/reelstudio
+        run: |
+          npm ci --no-audit --no-fund
+          test -x "$PLAYWRIGHT_CHROME" || { echo "::warning::$PLAYWRIGHT_CHROME 가 없어 Chromium을 내려받습니다"; npx playwright-core install chromium; echo "PLAYWRIGHT_CHROME=" >> "$GITHUB_ENV"; }
+
+      - name: 목소리 점검
+        run: |
+          ok=""
+          for i in 1 2 3; do
+            python -m cardbot.lemoreel check-voice && ok=1 && break
+            echo "목소리 점검 실패 $i/3, 기다렸다 다시 시도합니다"; sleep $((i * 10))
+          done
+          [ -n "$ok" ] || { echo "::error::edge-tts 목소리를 만들 수 없습니다"; exit 1; }
+
+      - name: 렌더링
+        env:
+          FOLDER: ${{ inputs.folder }}
+        run: python -m cardbot render $FOLDER
+
+      - name: 결과를 drafts 브랜치에 저장
+        working-directory: .
+        run: |
+          shopt -s nullglob
+          if [ -z "$(ls -A out 2>/dev/null)" ]; then echo "새로 만든 결과 없음"; exit 0; fi
+          git config --global user.name "youth-bot"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch --depth=1 origin "$DRAFTS_BRANCH:$DRAFTS_BRANCH"; then
+            git worktree add drafts "$DRAFTS_BRANCH"
+          else
+            git worktree add --orphan -b "$DRAFTS_BRANCH" drafts
+            printf '# 시안 브랜치\n\n자동 렌더링 결과(이미지·영상)가 폴더별로 쌓입니다.\n' > drafts/README.md
+          fi
+          cp -r out/* drafts/
+          git -C drafts add -A
+          git -C drafts diff --cached --quiet && { echo "변경 없음"; exit 0; }
+          git -C drafts commit -m "시안: ${{ github.run_number }}"
+          for i in 1 2 3; do
+            git -C drafts fetch origin "$DRAFTS_BRANCH" 2>/dev/null && git -C drafts rebase FETCH_HEAD 2>/dev/null || true
+            git -C drafts push origin "HEAD:$DRAFTS_BRANCH" && exit 0
+            sleep $((i * 5))
+          done
+          echo "::error::drafts 브랜치 푸시 실패"; exit 1
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: out-${{ github.run_number }}
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 14

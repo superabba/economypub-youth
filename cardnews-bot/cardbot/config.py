@@ -1,0 +1,175 @@
+"""환경변수(.env) 기반 설정."""
+
+from __future__ import annotations
+
+import os
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_dotenv(path: Path) -> None:
+    """아주 단순한 .env 로더 (이미 설정된 환경변수는 덮어쓰지 않음)."""
+    if not path.exists():
+        return
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        value = value.strip()
+        if value[:1] in {'"', "'"}:
+            value = value[1:].split(value[0], 1)[0]
+        else:
+            value = re.split(r"\s+#", value, 1)[0].strip()  # 인라인 주석 제거
+        os.environ.setdefault(key.strip(), value)
+
+
+def _env(name: str, default: str = "") -> str:
+    # 빈 문자열도 '미설정'으로 취급 (GitHub Actions에서 없는 변수는 ""로 들어옴)
+    return os.environ.get(name, "").strip() or default
+
+
+def _bool(name: str, default: bool = False) -> bool:
+    v = _env(name)
+    if not v:
+        return default
+    return v.lower() in {"1", "true", "yes", "on", "y"}
+
+
+@dataclass
+class Settings:
+    # LLM
+    llm_provider: str = "claude"  # claude | gemini
+    anthropic_model: str = "claude-opus-5"
+    gemini_model: str = "gemini-flash-latest"
+    effort: str = "high"
+
+    # 콘텐츠 방향
+    niche: str = "20~40대가 관심 갖는 생활·경제·테크 정보"
+    tone: str = "친근하고 명확한 존댓말"
+    brand_handle: str = ""
+    slides_min: int = 5
+    slides_max: int = 8
+    theme: str = "midnight"
+    blog_enabled: bool = True  # 카드뉴스와 같은 주제로 블로그 글 초안도 생성
+
+    # 트렌드 소스
+    geo: str = "KR"
+    youtube_api_key: str = ""
+    extra_rss: list[str] = field(default_factory=list)
+
+    # 이미지 호스팅 (Instagram/Threads API는 공개 URL의 이미지만 받음)
+    hosting: str = "github"  # github | s3 | local
+    github_token: str = ""
+    github_repo: str = ""  # owner/repo
+    github_branch: str = "main"
+    github_dir: str = "cardnews"
+    s3_bucket: str = ""
+    s3_endpoint: str = ""
+    s3_prefix: str = "cardnews"
+    public_base_url: str = ""
+    public_dir: str = ""
+
+    # 플랫폼
+    platforms: list[str] = field(default_factory=lambda: ["instagram", "reels", "threads"])
+    reels_audio: str = "auto"  # auto=배경음악 합성, none=무음, 그 외=음원 파일/폴더 경로
+    reels_fps: int = 30
+    reels_engine: str = "classic"  # classic=카드 이미지를 넘기는 기존 릴스, lemo=스타일 영상(내레이션·믹싱, lemo-opuscar 렌더 도구)
+    reels_style: str = "auto"  # lemo 엔진일 때 auto=주제에 맞게 고름, 또는 caption-news | chalkboard | swiss-motion
+    reels_voice: str = "ko-KR-SunHiNeural"  # 한국어 여성 아나운서 내레이션
+    reels_voice_rate: str = "+0%"
+    reels_seconds_per_slide: float | None = None  # None이면 글자 수 기준 자동
+    ig_user_id: str = ""
+    ig_access_token: str = ""
+    ig_graph_base: str = "https://graph.instagram.com/v23.0"
+    threads_user_id: str = ""
+    threads_access_token: str = ""
+    threads_graph_base: str = "https://graph.threads.net/v1.0"
+    youtube_client_id: str = ""
+    youtube_client_secret: str = ""
+    youtube_refresh_token: str = ""
+    youtube_channel_id: str = ""  # 지정하면 이 채널이 아닐 때 업로드하지 않음
+    youtube_privacy: str = "private"  # public | unlisted | private (공개로 올리려면 public)
+    youtube_category: str = "27"  # 27=교육, 22=인물/블로그
+    youtube_synthetic: bool = False  # 실제처럼 보이는 AI 생성 영상이면 true
+
+    # 자동화
+    auto_publish: bool = False
+    interval_minutes: int = 240
+    posts_per_run: int = 1
+
+    # 경로
+    output_dir: Path = ROOT / "output"
+    data_dir: Path = ROOT / "data"
+    fonts_dir: Path = ROOT / "fonts"
+
+    @property
+    def reels_enabled(self) -> bool:
+        # 세로 영상은 인스타 릴스와 유튜브 쇼츠가 함께 쓴다
+        return "reels" in self.platforms or "youtube" in self.platforms
+
+    @classmethod
+    def load(cls) -> "Settings":
+        load_dotenv(ROOT / ".env")
+        s = cls()
+        s.llm_provider = _env("LLM_PROVIDER", s.llm_provider).lower()
+        s.anthropic_model = _env("ANTHROPIC_MODEL", s.anthropic_model)
+        s.gemini_model = _env("GEMINI_MODEL", s.gemini_model)
+        s.effort = _env("CARD_EFFORT", s.effort)
+        s.niche = _env("CARD_NICHE", s.niche)
+        s.tone = _env("CARD_TONE", s.tone)
+        s.brand_handle = _env("BRAND_HANDLE")
+        s.slides_min = int(_env("SLIDES_MIN", str(s.slides_min)))
+        s.slides_max = min(10, int(_env("SLIDES_MAX", str(s.slides_max))))
+        s.theme = _env("CARD_THEME", s.theme)
+        s.blog_enabled = _bool("BLOG_ENABLED", s.blog_enabled)
+        s.geo = _env("TREND_GEO", s.geo)
+        s.youtube_api_key = _env("YOUTUBE_API_KEY")
+        s.extra_rss = [u for u in _env("EXTRA_RSS").split(",") if u.strip()]
+        s.hosting = _env("IMAGE_HOSTING", s.hosting).lower()
+        s.github_token = _env("GITHUB_TOKEN")
+        s.github_repo = _env("GITHUB_REPO")
+        s.github_branch = _env("GITHUB_BRANCH", s.github_branch)
+        s.github_dir = _env("GITHUB_DIR", s.github_dir)
+        s.s3_bucket = _env("S3_BUCKET")
+        s.s3_endpoint = _env("S3_ENDPOINT")
+        s.s3_prefix = _env("S3_PREFIX", s.s3_prefix)
+        s.public_base_url = _env("PUBLIC_BASE_URL").rstrip("/")
+        s.public_dir = _env("PUBLIC_DIR")
+        plats = _env("PLATFORMS")
+        if plats:
+            s.platforms = [p.strip().lower() for p in plats.split(",") if p.strip()]
+        fixed = _env("REELS_SECONDS_PER_SLIDE", "auto").lower()
+        s.reels_seconds_per_slide = None if fixed == "auto" else max(0.5, float(fixed))
+        s.reels_audio = _env("REELS_AUDIO", s.reels_audio)
+        s.reels_engine = _env("REELS_ENGINE", s.reels_engine).lower()
+        s.reels_style = _env("REELS_STYLE", s.reels_style).lower()
+        s.reels_voice = _env("REELS_VOICE", s.reels_voice)
+        s.reels_voice_rate = _env("REELS_VOICE_RATE", s.reels_voice_rate)
+        s.ig_user_id = _env("IG_USER_ID")
+        s.ig_access_token = _env("IG_ACCESS_TOKEN")
+        s.ig_graph_base = _env("IG_GRAPH_BASE", s.ig_graph_base).rstrip("/")
+        s.threads_user_id = _env("THREADS_USER_ID")
+        s.threads_access_token = _env("THREADS_ACCESS_TOKEN")
+        s.threads_graph_base = _env("THREADS_GRAPH_BASE", s.threads_graph_base).rstrip("/")
+        s.youtube_client_id = _env("YOUTUBE_CLIENT_ID")
+        s.youtube_client_secret = _env("YOUTUBE_CLIENT_SECRET")
+        s.youtube_refresh_token = _env("YOUTUBE_REFRESH_TOKEN")
+        s.youtube_channel_id = _env("YOUTUBE_CHANNEL_ID")
+        s.youtube_privacy = _env("YOUTUBE_PRIVACY", s.youtube_privacy).lower()
+        s.youtube_category = _env("YOUTUBE_CATEGORY", s.youtube_category)
+        s.youtube_synthetic = _bool("YOUTUBE_SYNTHETIC", s.youtube_synthetic)
+        # PLATFORMS를 따로 정하지 않았으면, 유튜브 인증값이 있을 때 쇼츠 업로드를 자동으로 켠다
+        if not plats and s.youtube_refresh_token and "youtube" not in s.platforms:
+            s.platforms.append("youtube")
+        s.auto_publish = _bool("AUTO_PUBLISH", False)
+        s.interval_minutes = int(_env("INTERVAL_MINUTES", str(s.interval_minutes)))
+        s.posts_per_run = int(_env("POSTS_PER_RUN", str(s.posts_per_run)))
+        s.output_dir = Path(_env("CARDBOT_OUTPUT_DIR", str(s.output_dir)))
+        s.data_dir = Path(_env("CARDBOT_DATA_DIR", str(s.data_dir)))
+        for d in (s.output_dir, s.data_dir, s.fonts_dir):
+            d.mkdir(parents=True, exist_ok=True)
+        return s

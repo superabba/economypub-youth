@@ -1,0 +1,8 @@
+# LLM(API) 라이브러리는 일부러 넣지 않았다. 원고는 Claude 루틴이 content/ 에 써 둔다.
+pydantic>=2.7
+pillow>=10.0
+requests>=2.31
+imageio-ffmpeg>=0.5  # 릴스 영상 인코딩용 ffmpeg 포함
+numpy>=1.26  # 배경음악·효과음 믹싱
+scipy>=1.11
+edge-tts>=6.1  # 한국어 여성 아나운서 내레이션
