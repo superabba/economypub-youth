@@ -1,0 +1,22 @@
+{
+  "style": "caption-news",
+  "label": "뉴스 캡션",
+  "reason": "제도 안내",
+  "duration": 31.879895833333332,
+  "fps": 30,
+  "rate": "+0%",
+  "music": {
+    "mood": "bright",
+    "track": "bright/kevin-macleod-vibe-ace.m4a",
+    "credit": "🎵 Vibe Ace - Kevin MacLeod (CC BY 3.0, 편집) http://freemusicarchive.org/music/Kevin_MacLeod/Jazz_Sampler/Vibe_Ace_1278"
+  },
+  "narration": [
+    "1번째 내레이션이에요. 월 10만 원을 확인해 보세요.",
+    "2번째 내레이션이에요. 월 20만 원을 확인해 보세요.",
+    "3번째 내레이션이에요. 월 30만 원을 확인해 보세요.",
+    "4번째 내레이션이에요. 월 40만 원을 확인해 보세요.",
+    "5번째 내레이션이에요. 월 50만 원을 확인해 보세요.",
+    "6번째 내레이션이에요. 월 60만 원을 확인해 보세요."
+  ],
+  "cards": []
+}
