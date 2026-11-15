@@ -85,6 +85,10 @@ jobs:
             echo "::warning::drafts 브랜치가 아직 없습니다 (렌더링이 한 번도 안 돌았습니다)"; echo "NO_DRAFTS=1" >> "$GITHUB_ENV"
           fi
 
+      - name: 토큰 점검 (읽기 전용, 아무것도 올리지 않음)
+        if: env.DRY_RUN == 'true'
+        run: python -m cardbot publish --check
+
       - name: 게시
         if: env.NO_DRAFTS != '1'
         run: |

@@ -119,3 +119,28 @@ def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, 
     meta["failures"] = failures
     save()
     return meta
+
+
+def check_credentials(s: Settings, publishers=None) -> dict[str, str]:
+    """토큰이 실제로 통하는지 읽기 전용 호출로만 확인한다 (아무것도 올리지 않는다). {플랫폼: 결과 문장}"""
+    out: dict[str, str] = {}
+    pubs = publishers if publishers is not None else make_publishers(s)
+    seen = set()
+    for p in pubs:
+        key = p.name if p.name != "reels" else "instagram"  # 릴스와 인스타는 같은 계정이라 한 번만
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            if p.name in ("instagram", "reels", "threads"):
+                me = p.api.get(p.user_id, fields="username")
+                out[key] = f"정상 (계정 @{me.get('username', '?')})"
+            elif p.name == "youtube":
+                cid, title = p.my_channel()
+                want = getattr(p, "channel_id", "")
+                out[key] = f"정상 (채널 {title}, {cid})" + ("" if not want or want == cid else f" — 경고: YOUTUBE_CHANNEL_ID({want})와 다른 채널입니다")
+            else:
+                out[key] = "확인 방법 없음"
+        except Exception as e:  # 토큰 값이 로그에 남지 않게 메시지만 짧게
+            out[key] = f"실패: {str(e)[:200]}"
+    return out

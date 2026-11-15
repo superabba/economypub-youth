@@ -25,6 +25,7 @@ def main() -> int:
     q.add_argument("--latest", action="store_true", help="--dir 안에서 가장 최근의 아직 안 올린 폴더")
     q.add_argument("--dir", default="", help="--latest 가 찾아볼 시안 모음 폴더 (예: ../drafts)")
     q.add_argument("--dry-run", action="store_true", help="올리지 않고 무엇을 올릴지만 보여 준다")
+    q.add_argument("--check", action="store_true", help="토큰이 통하는지 읽기 전용으로만 확인한다 (아무것도 올리지 않는다)")
     a = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     if a.cmd == "pending":
@@ -33,6 +34,11 @@ def main() -> int:
         return 0
     if a.cmd == "publish":
         s = Settings.load()
+        if a.check:
+            res = pub.check_credentials(s)
+            for k, v in res.items():
+                print(f"{k}: {v}")
+            return 0 if res and all(v.startswith("정상") for v in res.values()) else 1
         folder = _P(a.folder) if a.folder else (pub.latest_unpublished(_P(a.dir), s) if a.latest else None)
         if not folder:
             print("올릴 시안이 없습니다")

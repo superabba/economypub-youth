@@ -87,3 +87,23 @@ def test_latest_unpublished_picks_newest_and_respects_age(tmp_path):
     assert publish.latest_unpublished(tmp_path, s, now) is None  # 최신 폴더를 이미 다 올렸으면 옛 폴더는 건드리지 않는다
     assert publish.latest_unpublished(tmp_path, s, datetime(2026, 11, 20, 11, 30, tzinfo=KST)) is None  # 너무 오래됨
     assert old.exists()
+
+
+def test_check_credentials_reports_each_platform_without_posting():
+    class Graph:
+        def __init__(self, ok): self.ok = ok
+        def get(self, path, **params):
+            if not self.ok:
+                raise RuntimeError("토큰 만료")
+            return {"username": "economypub"}
+
+    class P:
+        def __init__(self, name, ok=True): self.name, self.user_id, self.api = name, "1", Graph(ok)
+
+    class YT:
+        name, channel_id = "youtube", "UC_other"
+        def my_channel(self): return "UC_mine", "경제주막"
+
+    res = publish.check_credentials(Settings(), publishers=[P("instagram"), P("reels"), P("threads", ok=False), YT()])
+    assert list(res) == ["instagram", "threads", "youtube"]  # 릴스는 인스타와 같은 계정이라 한 번만
+    assert res["instagram"].startswith("정상") and res["threads"].startswith("실패") and "경고" in res["youtube"]
