@@ -17,6 +17,12 @@
 ## 순서
 1. **겹치는 주제 확인**
    - `content/` 안 폴더의 `topic.json`(title, keyword)을 읽어 최근 14일에 다룬 소재를 파악합니다.
+   - 같은 계정에 올라가는 **일일 쇼츠**와도 겹치지 않게, 쇼츠가 최근에 다룬 주제를 확인합니다 (같은 날 같은 계정에 비슷한 주제가 두 번 나가지 않게). 공개 저장소의 기록을 읽습니다:
+     ```bash
+     git fetch -q --depth=1 https://github.com/superabba/my-site.git shorts-records:refs/remotes/shorts/records
+     for f in $(git ls-tree --name-only refs/remotes/shorts/records records/ | tail -8); do git show refs/remotes/shorts/records:$f | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('created_at','')[:10],d.get('topic') or d.get('title'))"; done
+     ```
+     최근 3일 안에 쇼츠가 같은 정책·같은 제도를 다뤘다면 그 소재는 피하고 다른 소재를 고릅니다. 읽지 못하면(네트워크 차단 등) 이 확인은 건너뛰고, 최종 보고에 "쇼츠 주제 확인 못 함"이라고 적으세요.
    - 기존 채널과도 겹치지 않게 Uplika `list_posts`(workspaceId `ws_3a45040ee5856407`, **limit 8**)의 제목만 훑어봅니다 (기존 채널은 세금·연금·제도, 생활비 절약·환불·소비 팁을 다룹니다).
      결과가 너무 길거나 Uplika 도구가 없으면 이 단계는 건너뛰고, 청년 정책이 아닌 소재(세금·연금·생활비 절약)는 고르지 않는 것으로 대신합니다.
 2. **소재 고르기** — 웹 검색으로 **청년·사회초년생 정책** 소재를 찾습니다. 속보일 필요는 없습니다. 아래 중 하나면 됩니다.
