@@ -1,0 +1,23 @@
+{
+  "style": "swiss-motion",
+  "label": "스위스 타이포",
+  "reason": "기간·금액·비율 등 숫자가 핵심인 마감형 소재",
+  "duration": 39.11439583333333,
+  "fps": 30,
+  "rate": "+0%",
+  "music": {
+    "mood": "warm",
+    "track": "warm/jason-shaw-running-waters.m4a",
+    "credit": "🎵 RUNNING WATERS - Jason Shaw (CC BY 3.0, 편집) http://freemusicarchive.org/music/Jason_Shaw/Audionautix_Acoustic/RUNNING_WATERS______________2-46"
+  },
+  "narration": [
+    "청년미래적금 2차, 계좌 개설 기간이 시작됐습니다.",
+    "개설 기간은 11월 16일부터 27일까지, 딱 열이틀입니다.",
+    "대상은 만 19세부터 34세 청년이고, 자격은 심사에서 확인합니다.",
+    "월 50만 원까지 3년간 납입하고, 정부 기여금은 6퍼센트 또는 12퍼센트입니다.",
+    "도약계좌에서 갈아타려면 특별 중도해지를 따로 신청해야 합니다.",
+    "정리하면 27일 전에 계좌를 열고, 해지는 순서를 지켜 신청하세요.",
+    "저장해 두고 마감 전에 취급 은행 공지를 꼭 확인하세요."
+  ],
+  "cards": []
+}
