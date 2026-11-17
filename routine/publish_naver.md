@@ -9,7 +9,7 @@
 
 경제주막 '청년·사회초년생 정책' 카드뉴스의 **네이버 블로그·클립**을 Uplika로 발행하는 루틴입니다. 인스타·스레드·유튜브 쇼츠는 GitHub Actions가 이미 올렸으니 건드리지 마세요. Uplika 워크스페이스는 `ws_3a45040ee5856407`(economypub)입니다.
 
-1. **오늘 시안 찾기** (KST 23시 이후 마지막 실행까지 같은 규칙) — 저장소의 `drafts` 브랜치에서 가장 최근 폴더(`YYYYMMDD-HHMM-슬러그`)를 읽습니다 (`git fetch origin drafts` 후 `git show origin/drafts:<폴더>/<파일>`, 또는 GitHub 파일 읽기 도구). 폴더 날짜가 오늘(KST)이 아니면 "오늘 시안 없음"으로 보고하고 끝냅니다.
+1. **오늘 시안 찾기** — 저장소의 `drafts` 브랜치에서 가장 최근 폴더(`YYYYMMDD-HHMM-슬러그`)를 읽습니다 (`git fetch origin drafts` 후 `git show origin/drafts:<폴더>/<파일>`, 또는 GitHub 파일 읽기 도구). 폴더 날짜가 오늘(KST)이 아니면 "오늘 시안 없음"으로 보고하고 끝냅니다.
 2. **중복 방지(채널별)** — 이 루틴은 하루에 여러 번 실행되므로, **네이버 블로그와 네이버 클립을 따로** 확인합니다. Uplika `list_posts`(최근 30건)에서 오늘 시안의 제목(블로그) 또는 클립 글(첫 줄)과 같은 게시물이 있으면, 상태가 게시됨·접수됨·예약됨·진행 중이든 그 채널은 **이미 끝난 것**으로 보고 건너뜁니다. 상태가 `failed`인 것만 다시 올립니다(`retry_post` 또는 새로 `publish`). 두 채널이 모두 끝났으면 "이미 발행 완료"만 보고하고 종료합니다.
 3. **재료** — 폴더의 `blog.md`(글), `card.json`(슬라이드 6~8장), `caption.txt`, `music.json`(`credit`: 음악 출처 한 줄), `published.json`:
    - `image_urls`: 슬라이드 이미지 공개 주소 (slide_01 ~ slide_NN 순서)
