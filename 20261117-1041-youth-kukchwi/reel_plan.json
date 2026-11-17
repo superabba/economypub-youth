@@ -1,0 +1,24 @@
+{
+  "style": "caption-news",
+  "label": "뉴스 캡션",
+  "reason": "이미 시행된 수당 인상을 소식처럼 전하는 상시 안내",
+  "duration": 41.939499999999995,
+  "fps": 30,
+  "rate": "+0%",
+  "music": {
+    "mood": "warm",
+    "track": "warm/andy-g-cohen-a-human-being.m4a",
+    "credit": "🎵 A Human Being - Andy G. Cohen (CC BY 4.0, 편집) http://freemusicarchive.org/music/Andy_G_Cohen/Through_The_Lens/Andy_G_Cohen_-_A_Human_Being"
+  },
+  "narration": [
+    "취업 준비 중이라면 국민취업지원제도, 월 60만 원 수당부터 확인하세요.",
+    "구직촉진수당이 50만 원에서 60만 원으로 올랐습니다.",
+    "여섯 달 받으면 최대 360만 원, 상담과 훈련 연계도 함께 받습니다.",
+    "Ⅱ유형은 취업활동비용을 최대 35만 원까지 지원합니다.",
+    "신청은 고용24나 고용센터에서 하고, 승인까지 한 달쯤 걸립니다.",
+    "지급 중 소득이 생기면 소득 신고를 꼭 해야 합니다.",
+    "청년 대상 기준은 자료마다 달라서 공식 공고로 확인하세요.",
+    "저장해 두고 신청 전에 고용24에서 최종 확인하세요."
+  ],
+  "cards": []
+}
