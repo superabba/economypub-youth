@@ -107,3 +107,22 @@ def test_check_credentials_reports_each_platform_without_posting():
     res = publish.check_credentials(Settings(), publishers=[P("instagram"), P("reels"), P("threads", ok=False), YT()])
     assert list(res) == ["instagram", "threads", "youtube"]  # 릴스는 인스타와 같은 계정이라 한 번만
     assert res["instagram"].startswith("정상") and res["threads"].startswith("실패") and "경고" in res["youtube"]
+
+
+# ---------------------------------------------------------------- 인스타 카드 슬라이드(캐러셀)는 올리지 않는다
+
+def test_instagram_carousel_off_by_default(monkeypatch):
+    from cardbot.config import Settings
+    for k in ("PLATFORMS", "INSTAGRAM_CAROUSEL", "YOUTUBE_REFRESH_TOKEN"):
+        monkeypatch.setenv(k, "")
+    s = Settings.load()
+    assert "instagram" not in s.platforms and {"reels", "threads"} <= set(s.platforms)
+
+
+def test_instagram_in_platforms_variable_is_stripped_unless_enabled(monkeypatch):
+    from cardbot.config import Settings
+    monkeypatch.setenv("PLATFORMS", "instagram,reels,threads,youtube")
+    monkeypatch.setenv("INSTAGRAM_CAROUSEL", "")
+    assert Settings.load().platforms == ["reels", "threads", "youtube"]
+    monkeypatch.setenv("INSTAGRAM_CAROUSEL", "true")
+    assert Settings.load().platforms == ["instagram", "reels", "threads", "youtube"]

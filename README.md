@@ -32,3 +32,6 @@ python -m cardbot.validate_content ../content/<폴더>   # 원고 형식 확인
 python -m cardbot render <폴더>                        # content/ → ../out/
 LEMO_E2E=1 REELS_FAKE_TTS=1 python -m pytest tests     # 브라우저 렌더링 시험 (가짜 목소리)
 ```
+
+## 인스타 카드 슬라이드는 올리지 않음
+인스타그램 **카드 슬라이드(캐러셀) 게시는 꺼져 있습니다.** 릴스·스레드·유튜브 쇼츠는 그대로 올라갑니다. `PLATFORMS` 변수에 `instagram` 이 들어 있어도 무시되며, 다시 올리려면 저장소 Variables 에 `INSTAGRAM_CAROUSEL=true` 를 넣으세요. (스레드는 같은 슬라이드를 캐러셀로 올립니다.)

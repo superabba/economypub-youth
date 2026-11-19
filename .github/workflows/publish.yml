@@ -41,7 +41,7 @@ jobs:
       YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
       YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
       # --- Variables (비우면 기본값) ---
-      PLATFORMS: ${{ vars.PLATFORMS }} # 기본 instagram,reels,threads (+ 유튜브 인증값이 있으면 youtube 자동)
+      PLATFORMS: ${{ vars.PLATFORMS }} # 기본 reels,threads (인스타 카드 슬라이드 "instagram" 은 INSTAGRAM_CAROUSEL=true 일 때만 올라감) (+ 유튜브 인증값이 있으면 youtube 자동)
       YOUTUBE_PRIVACY: ${{ secrets.YOUTUBE_PRIVACY || vars.YOUTUBE_PRIVACY }} # my-site 동기화가 Secrets 로 복사하므로 Secrets 를 먼저 읽는다 # 기본 private, 공개는 public
       YOUTUBE_CATEGORY: ${{ vars.YOUTUBE_CATEGORY }}
       YOUTUBE_SYNTHETIC: ${{ vars.YOUTUBE_SYNTHETIC }}
