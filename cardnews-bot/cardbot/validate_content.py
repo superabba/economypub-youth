@@ -107,7 +107,7 @@ def check(folder: Path) -> list[str]:
                     own.add(json.loads((prev / "reel.json").read_text(encoding="utf-8")).get("style"))
                 except Exception:
                     pass
-            options = [n for n, st in STYLES.items() if not st.beats and n not in own and n != cross]
+            options = [n for n in STYLES if n not in own and n != cross]
             if options:
                 errs.append(f"같은 계정의 카드뉴스(my-site)가 최근 쓴 스타일({cross})과 같습니다. 다른 스타일을 쓰세요: {' | '.join(options)}")
     for prev in _previous(folder, 14):
