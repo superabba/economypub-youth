@@ -114,6 +114,7 @@ def test_same_style_as_cardnews_repo_is_rejected_when_alternatives_exist(content
 def test_cross_check_passes_when_no_alternative_or_unreadable(content_root, monkeypatch):
     from cardbot import stylefeed
     monkeypatch.setenv("STYLE_CROSS_AVOID", "true")
+    monkeypatch.setattr(validate_content, "STYLES", ("caption-news", "chalkboard", "swiss-motion"))  # 스타일이 3개뿐인 경우
     # 내 직전 두 편이 나머지 두 스타일이라, 상대와 같아도 고를 게 없으니 통과
     make_content(content_root, "20261114-a", style="caption-news", keyword="a")
     make_content(content_root, "20261115-b", style="chalkboard", keyword="b")
