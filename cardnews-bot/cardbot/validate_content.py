@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -93,6 +94,22 @@ def check(folder: Path) -> list[str]:
                     errs.append(f"직전 영상({prev.name})과 같은 스타일입니다. 최근 {RECENT}편과 다른 스타일을 쓰세요")
             except Exception:
                 pass
+    if style in STYLES and os.environ.get("STYLE_CROSS_AVOID", "true").lower() not in ("0", "false", "no", "off"):
+        # 같은 계정에 올라가는 카드뉴스(my-site)가 최근에 쓴 스타일과 같으면 다른 스타일을 권한다.
+        # 그러면 고를 스타일이 안 남을 때나 상대 저장소를 읽지 못할 때는 통과시킨다 (있으면 좋은 확인)
+        from . import stylefeed
+
+        cross = stylefeed.other_repo_style("youth")
+        if cross and cross == style:
+            own = set()
+            for prev in _previous(folder, RECENT):
+                try:
+                    own.add(json.loads((prev / "reel.json").read_text(encoding="utf-8")).get("style"))
+                except Exception:
+                    pass
+            options = [n for n in STYLES if n not in own and n != cross]
+            if options:
+                errs.append(f"같은 계정의 카드뉴스(my-site)가 최근 쓴 스타일({cross})과 같습니다. 다른 스타일을 쓰세요: {' | '.join(options)}")
     for prev in _previous(folder, 14):
         try:
             if TopicIdea.model_validate_json((prev / "topic.json").read_text(encoding="utf-8")).keyword.strip() == topic.keyword.strip():

@@ -32,3 +32,9 @@ def content_root(tmp_path):
     root = tmp_path / "content"
     root.mkdir()
     return root
+
+
+@pytest.fixture(autouse=True)
+def _no_network_style_feed(monkeypatch):
+    """기본 시험은 상대 저장소를 읽지 않는다 (필요한 시험이 따로 켠다)."""
+    monkeypatch.setenv("STYLE_CROSS_AVOID", "false")

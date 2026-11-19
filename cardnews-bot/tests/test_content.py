@@ -98,3 +98,27 @@ def test_long_highlight_is_rejected(content_root):
     card["slides"][0]["highlight"] = "월 최대 20만 원"  # 9자: 큰 글씨라 '원'만 다음 줄에 남는다
     (d / "card.json").write_text(json.dumps(card, ensure_ascii=False), encoding="utf-8")
     assert any("highlight" in e for e in validate_content.check(d))
+
+
+def test_same_style_as_cardnews_repo_is_rejected_when_alternatives_exist(content_root, monkeypatch):
+    from cardbot import stylefeed
+    monkeypatch.setenv("STYLE_CROSS_AVOID", "true")
+    monkeypatch.setattr(stylefeed, "other_repo_style", lambda this, **kw: "swiss-motion")
+    d = make_content(content_root, "20261116-a", style="swiss-motion")
+    assert any("카드뉴스(my-site)" in e for e in validate_content.check(d))
+    shutil.rmtree(d)
+    ok = make_content(content_root, "20261116-a", style="chalkboard")
+    assert validate_content.check(ok) == []
+
+
+def test_cross_check_passes_when_no_alternative_or_unreadable(content_root, monkeypatch):
+    from cardbot import stylefeed
+    monkeypatch.setenv("STYLE_CROSS_AVOID", "true")
+    # 내 직전 두 편이 나머지 두 스타일이라, 상대와 같아도 고를 게 없으니 통과
+    make_content(content_root, "20261114-a", style="caption-news", keyword="a")
+    make_content(content_root, "20261115-b", style="chalkboard", keyword="b")
+    monkeypatch.setattr(stylefeed, "other_repo_style", lambda this, **kw: "swiss-motion")
+    d = make_content(content_root, "20261116-c", style="swiss-motion", keyword="c")
+    assert validate_content.check(d) == []
+    monkeypatch.setattr(stylefeed, "other_repo_style", lambda this, **kw: None)  # 못 읽음
+    assert validate_content.check(d) == []
