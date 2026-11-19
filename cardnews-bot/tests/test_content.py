@@ -114,6 +114,7 @@ def test_same_style_as_cardnews_repo_is_rejected_when_alternatives_exist(content
 def test_cross_check_passes_when_no_alternative_or_unreadable(content_root, monkeypatch):
     from cardbot import stylefeed
     monkeypatch.setenv("STYLE_CROSS_AVOID", "true")
+    monkeypatch.setattr(validate_content, "STYLES", ("caption-news", "chalkboard", "swiss-motion"))  # 스타일이 3개뿐인 경우
     # 내 직전 두 편이 나머지 두 스타일이라, 상대와 같아도 고를 게 없으니 통과
     make_content(content_root, "20261114-a", style="caption-news", keyword="a")
     make_content(content_root, "20261115-b", style="chalkboard", keyword="b")
@@ -121,4 +122,14 @@ def test_cross_check_passes_when_no_alternative_or_unreadable(content_root, monk
     d = make_content(content_root, "20261116-c", style="swiss-motion", keyword="c")
     assert validate_content.check(d) == []
     monkeypatch.setattr(stylefeed, "other_repo_style", lambda this, **kw: None)  # 못 읽음
+    assert validate_content.check(d) == []
+
+
+def test_all_six_styles_are_accepted_and_have_pages(content_root):
+    from cardbot import lemoreel
+    assert len(validate_content.STYLES) == 6
+    for name in validate_content.STYLES:
+        assert name in lemoreel.STYLES and not lemoreel.STYLES[name].beats
+        assert (lemoreel.STUDIO / "styles" / (lemoreel.STYLES[name].page or name) / "index.html").exists()
+    d = make_content(content_root, "20261116-a", style="blueprint")
     assert validate_content.check(d) == []

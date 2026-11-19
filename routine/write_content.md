@@ -35,7 +35,7 @@
    - 신청 기간·금액·대상이 확인되지 않으면 쓰지 않거나 "아직 확인 전"이라고 분명히 적습니다. 숫자는 출처의 기준일을 함께 적습니다.
    - 투자 권유, 특정 금융상품 추천, 단정적인 수익 약속은 쓰지 않습니다.
 3. **스타일 고르기** — 가장 최근 두 폴더의 `reel.json`의 `style`을 확인하고, 그 둘과 **다른** 스타일을 씁니다. 같은 계정에 올라가는 카드뉴스(my-site)가 최근에 쓴 스타일도 피합니다 — 검사(`validate_content`)가 같으면 알려 주니, 안내하는 다른 스타일로 바꾸세요 (상대 저장소를 읽지 못하면 이 확인은 건너뜁니다).
-   - `caption-news`: 새로 나왔거나 바뀐 제도·속보 / `chalkboard`: 방법·절차·신청 요령 / `swiss-motion`: 숫자·금액·비교가 핵심
+   - `caption-news`: 새로 나왔거나 바뀐 제도·속보 / `chalkboard`: 방법·절차·신청 요령 / `swiss-motion`: 숫자·금액·비교가 핵심 / `news-package`: 방송 뉴스 브리핑(오늘의 이슈·핵심 사실 정리) / `whiteboard`: 화이트보드 설명(왜·어떻게·원리) / `blueprint`: 청사진 도면(단계·요건·한도·절차)
    - (`caption-beat`는 이 저장소에서 쓰지 않습니다.)
 4. **파일 쓰기** — 폴더 이름은 `content/YYYYMMDD-HHMM-짧은슬러그` (한국 시각). 아래 4개 파일을 만듭니다.
 5. **검증** — `cd cardnews-bot && pip install -q pydantic && python -m cardbot.validate_content ../content/<폴더>` 가 "통과"를 낼 때까지 고칩니다.
