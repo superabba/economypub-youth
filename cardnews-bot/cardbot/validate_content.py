@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .llm import CardNews, TopicIdea
 
-STYLES = ("caption-news", "chalkboard", "swiss-motion", "news-package", "whiteboard", "blueprint")  # 비트 스타일은 컷 구성이 달라 이 저장소에서는 쓰지 않는다
+STYLES = ("caption-news", "chalkboard", "swiss-motion", "news-package", "whiteboard", "blueprint", "halftone-dossier", "transit-map")  # 비트 스타일은 컷 구성이 달라 이 저장소에서는 쓰지 않는다
 RECENT = 2  # 직전 두 편과 같은 스타일은 쓰지 않는다
 
 
