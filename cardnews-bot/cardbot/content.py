@@ -68,6 +68,12 @@ def render_folder(src: Path, out_root: Path = OUT_ROOT) -> Path:
         voice=os.environ.get("REELS_VOICE") or lemoreel.DEFAULT_VOICE,
         rate=os.environ.get("REELS_VOICE_RATE") or "+0%", fps=int(os.environ.get("REELS_FPS") or 30),
     )
+    try:  # 스레드 캐러셀·네이버 블로그에 쓸 릴스 영상 장면 캡처 (실패하면 슬라이드를 대신 쓴다)
+        from . import frames
+
+        log.info("릴스 장면 캡처 %d장", len(frames.capture_frames(out)))
+    except Exception as e:
+        log.warning("릴스 장면 캡처 실패, 슬라이드를 대신 씁니다: %s", e)
     return out
 
 
