@@ -126,3 +126,41 @@ def test_instagram_in_platforms_variable_is_stripped_unless_enabled(monkeypatch)
     assert Settings.load().platforms == ["reels", "threads", "youtube"]
     monkeypatch.setenv("INSTAGRAM_CAROUSEL", "true")
     assert Settings.load().platforms == ["instagram", "reels", "threads", "youtube"]
+
+
+# ---------------------------------------------------------------- 스레드·블로그 이미지는 릴스 영상 캡처
+
+def _real_reel(folder, seconds=6):
+    import subprocess
+
+    from cardbot.frames import _ffmpeg
+    subprocess.run([_ffmpeg(), "-y", "-v", "error", "-f", "lavfi", "-i", f"testsrc=s=270x480:d={seconds}:r=10",
+                    "-pix_fmt", "yuv420p", str(folder / "reel.mp4")], check=True)
+
+
+def test_publish_uses_reel_frames_for_threads_and_naver(tmp_path):
+    d = rendered(tmp_path)
+    _real_reel(d)
+    (d / "reel_plan.json").write_text(json.dumps({"frames": [1.0, 3.0, 5.0]}), encoding="utf-8")
+    th = FakePub("threads")
+    meta = publish.publish_folder(d, Settings(), host=FakeHost(), publishers=[th])
+    names = [u.rsplit("/", 1)[-1] for u in meta["image_urls"]]
+    assert names == ["frame_01.jpg", "frame_02.jpg", "frame_03.jpg"]          # published.json → 네이버 루틴이 읽는 주소
+    assert [u.rsplit("/", 1)[-1] for u in th.calls[0][0]["image_urls"]] == names  # 스레드 캐러셀
+
+
+def test_publish_falls_back_to_slides_without_a_playable_reel(tmp_path):
+    d = rendered(tmp_path)      # reel.mp4 가 영상이 아니다
+    th = FakePub("threads")
+    meta = publish.publish_folder(d, Settings(), host=FakeHost(), publishers=[th])
+    assert [u.rsplit("/", 1)[-1] for u in meta["image_urls"]][0] == "slide_01.jpg"
+
+
+def test_instagram_carousel_gets_slides_not_frames_when_reenabled(tmp_path):
+    d = rendered(tmp_path)
+    _real_reel(d)
+    (d / "reel_plan.json").write_text(json.dumps({"frames": [1.0, 3.0, 5.0]}), encoding="utf-8")
+    ig = FakePub("instagram")
+    meta = publish.publish_folder(d, Settings(), host=FakeHost(), publishers=[ig])
+    assert [u.rsplit("/", 1)[-1] for u in ig.calls[0][0]["slide_urls"]][0] == "slide_01.jpg"
+    assert meta["image_urls"][0].endswith("frame_01.jpg")

@@ -12,7 +12,7 @@
 1. **오늘 시안 찾기** — 저장소의 `drafts` 브랜치에서 가장 최근 폴더(`YYYYMMDD-HHMM-슬러그`)를 읽습니다 (`git fetch origin drafts` 후 `git show origin/drafts:<폴더>/<파일>`, 또는 GitHub 파일 읽기 도구). 폴더 날짜가 오늘(KST)이 아니면 "오늘 시안 없음"으로 보고하고 끝냅니다.
 2. **중복 방지(채널별)** — 이 루틴은 하루에 여러 번 실행되므로, **네이버 블로그와 네이버 클립을 따로** 확인합니다. Uplika `list_posts`(최근 30건)에서 오늘 시안의 제목(블로그) 또는 클립 글(첫 줄)과 같은 게시물이 있으면, 상태가 게시됨·접수됨·예약됨·진행 중이든 그 채널은 **이미 끝난 것**으로 보고 건너뜁니다. 상태가 `failed`인 것만 다시 올립니다(`retry_post` 또는 새로 `publish`). 두 채널이 모두 끝났으면 "이미 발행 완료"만 보고하고 종료합니다.
 3. **재료** — 폴더의 `blog.md`(글), `card.json`(슬라이드 6~8장), `caption.txt`, `music.json`(`credit`: 음악 출처 한 줄), `published.json`:
-   - `image_urls`: 슬라이드 이미지 공개 주소 (slide_01 ~ slide_NN 순서)
+   - `image_urls`: **릴스 영상 장면 캡처** 공개 주소 (frame_01 ~ frame_NN 순서, 세로 1080×1920). 카드 슬라이드가 아니라 자막·연출이 입혀진 영상 화면입니다
    - `video_urls`: 릴스 영상 공개 주소 (첫 번째를 쓰고, 안 열리면 다음 것)
    - `posts.reels.permalink`(인스타 릴스), `posts.youtube.permalink`(유튜브 쇼츠): 있으면 블로그 글에 링크로 씁니다.
    `published.json`이 없거나 `video_urls`가 비어 있으면 Actions 게시가 아직 안 끝난 것입니다. 10분 간격으로 최대 3번 다시 확인하고, 그래도 없으면 보고하고 끝냅니다.
@@ -20,10 +20,10 @@
 5. **네이버 클립** — `media_from_url`로 영상 업로드(altText: 제목, aiGenerated true) 후 `publish`:
    - 글: 핵심 2~3줄(카드뉴스 캡션을 줄여서, 해시태그 제외) + 한 줄 `자세한 내용은 네이버 블로그 '경제주막'에 있어요.` + `music.json`의 `credit`(있을 때만, 맨 끝)
    - `options.naver_clip`: `{"categoryId": "48", "tags": [해시태그 3~5개, 공백 없이], "visibility": "public", "aiGenerated": true, "adDisclosure": false}`
-6. **네이버 블로그** — 슬라이드 이미지를 `media_from_url`로 올리고(altText: 각 슬라이드 제목), `blog.md`를 Uplika 네이버 형식으로 바꿔 `publish`합니다.
+6. **네이버 블로그** — `image_urls` 의 캡처 이미지를 `media_from_url`로 올리고(altText: `card.json` 슬라이드 제목, 순서대로 — 개수가 다르면 가까운 순서의 제목), `blog.md`를 Uplika 네이버 형식으로 바꿔 `publish`합니다.
    - 첫 줄 `# 제목`은 `options.naver_blog.title`로 옮기고 본문에서는 뺍니다.
-   - 본문 맨 위에 대표 이미지(slide_01) → 도입 문단 → `▶ 30초 쇼츠로 먼저 보기: [유튜브 쇼츠](주소) · [인스타 릴스](주소)` (둘 중 있는 것만).
-   - `## 소제목`은 `> 소제목{.underline}` 로, 섹션 사이에는 `---{.line1}` 줄을 넣고, 섹션마다 슬라이드 이미지를 `![소제목](media:ID)` 로 넣습니다.
+   - 본문 맨 위에 대표 이미지(frame_01) → 도입 문단 → `▶ 30초 쇼츠로 먼저 보기: [유튜브 쇼츠](주소) · [인스타 릴스](주소)` (둘 중 있는 것만).
+   - `## 소제목`은 `> 소제목{.underline}` 로, 섹션 사이에는 `---{.line1}` 줄을 넣고, 섹션마다 캡처 이미지를 `![소제목](media:ID)` 로 넣습니다.
    - FAQ(`**Q. …**` / `A. …`), 마무리, `**참고 자료**` 목록은 그대로 유지합니다.
    - `options.naver_blog`: `{"title": 제목, "categoryId": "2", "tags": [10~15개, 공백 없이], "openType": "public", "layout": "template", "form": "photo-story"}`
 7. **보고** — 발행한 채널, 제목, 링크(또는 접수 상태)를 한국어로 보고합니다. 블로그·클립 중 어느 쪽이 남았는지도 적습니다. 실패하면 에러 코드와 원인을 그대로 적고, 같은 글을 두 번 올리지 마세요(재시도 전 반드시 `list_posts`로 확인 — `publish`는 비동기라 접수만 되고 아직 안 보일 수 있으니 `wait: true`로 끝까지 기다립니다).

@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .bgm import with_credit
 from .config import Settings
+from .frames import capture_frames, frames_of
 from .hosting import make_host
 from .llm import CardNews, TopicIdea
 from .publishers import make_publishers
@@ -65,8 +66,15 @@ def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, 
     threads_text = (folder / "threads.txt").read_text(encoding="utf-8").strip()[:500]
     # CC BY 곡의 출처 표기는 영상이 올라가는 곳(인스타 릴스·유튜브)의 설명에만 붙인다. 스레드에는 붙이지 않는다.
     caption = with_credit(caption, folder, 2200)
-    images = sorted(folder.glob("slide_*.jpg"))
     reel = folder / "reel.mp4"
+    # 스레드·네이버 블로그에 쓸 이미지는 릴스 영상 캡처(frame_NN.jpg). 영상이 없으면 슬라이드를 쓴다
+    images = frames_of(folder)
+    if not images and reel.exists() and not dry_run:
+        try:
+            images = capture_frames(folder)
+        except Exception as e:
+            log.warning("릴스 장면 캡처 실패, 슬라이드를 대신 씁니다: %s", e)
+    images = images or sorted(folder.glob("slide_*.jpg"))
 
     if dry_run:
         pubs = publishers if publishers is not None else make_publishers(s)
@@ -81,7 +89,7 @@ def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, 
     save = lambda: meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")  # noqa: E731
 
     urls = meta.get("image_urls") or []
-    if not urls or not all(u.isascii() for u in urls):  # 비ASCII URL은 Meta가 가져오지 못한다
+    if not urls or not all(u.isascii() for u in urls) or [u.rsplit("/", 1)[-1] for u in urls] != [p.name for p in images]:
         host = host or make_host(s)
         meta["image_urls"] = host.upload(images, folder.name)
         save()
@@ -93,7 +101,13 @@ def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, 
         meta["video_urls"] = host.candidates(video_url)
         meta["reel_cover_url"] = cover_url
         save()
-    assets = {k: meta.get(k) for k in ("image_urls", "video_urls", "reel_cover_url")}
+    # 인스타 카드 슬라이드(캐러셀)를 다시 켠 경우에만 슬라이드 원본도 올린다 (캡처는 세로 9:16이라 캐러셀 비율이 안 맞는다)
+    if (any(p.name == "instagram" for p in pending) and images and images[0].name.startswith("frame_")
+            and not meta.get("slide_urls")):
+        host = host or make_host(s)
+        meta["slide_urls"] = host.upload(sorted(folder.glob("slide_*.jpg")), folder.name)
+        save()
+    assets = {k: meta.get(k) for k in ("image_urls", "slide_urls", "video_urls", "reel_cover_url")}
     assets["video_path"] = str(reel) if reel.exists() else None  # 유튜브는 파일을 직접 올린다
     assets["title"] = topic.title
     assets["hashtags"] = caption_hashtags(caption)
