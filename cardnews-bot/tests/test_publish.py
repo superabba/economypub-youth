@@ -138,15 +138,18 @@ def _real_reel(folder, seconds=6):
                     "-pix_fmt", "yuv420p", str(folder / "reel.mp4")], check=True)
 
 
-def test_publish_uses_reel_frames_for_threads_and_naver(tmp_path):
+def test_publish_uses_square_images_for_naver_and_reel_frames_for_threads(tmp_path):
+    from PIL import Image
     d = rendered(tmp_path)
     _real_reel(d)
     (d / "reel_plan.json").write_text(json.dumps({"frames": [1.0, 3.0, 5.0]}), encoding="utf-8")
     th = FakePub("threads")
     meta = publish.publish_folder(d, Settings(), host=FakeHost(), publishers=[th])
-    names = [u.rsplit("/", 1)[-1] for u in meta["image_urls"]]
-    assert names == ["frame_01.jpg", "frame_02.jpg", "frame_03.jpg"]          # published.json → 네이버 루틴이 읽는 주소
-    assert [u.rsplit("/", 1)[-1] for u in th.calls[0][0]["image_urls"]] == names  # 스레드 캐러셀
+    # published.json → 네이버 루틴이 읽는 주소: 정사각형 (피드 썸네일이 1:1 이라 세로 그림은 잘린다)
+    assert [u.rsplit("/", 1)[-1] for u in meta["image_urls"]] == ["blog_01.jpg", "blog_02.jpg", "blog_03.jpg"]
+    assert all(Image.open(p).size == (1080, 1080) for p in d.glob("blog_*.jpg"))
+    # 스레드 캐러셀: 세로 영상 캡처
+    assert [u.rsplit("/", 1)[-1] for u in th.calls[0][0]["threads_image_urls"]] == ["frame_01.jpg", "frame_02.jpg", "frame_03.jpg"]
 
 
 def test_publish_falls_back_to_slides_without_a_playable_reel(tmp_path):
@@ -156,11 +159,19 @@ def test_publish_falls_back_to_slides_without_a_playable_reel(tmp_path):
     assert [u.rsplit("/", 1)[-1] for u in meta["image_urls"]][0] == "slide_01.jpg"
 
 
-def test_instagram_carousel_gets_slides_not_frames_when_reenabled(tmp_path):
+def test_instagram_carousel_gets_slides_not_squares_when_reenabled(tmp_path):
     d = rendered(tmp_path)
     _real_reel(d)
     (d / "reel_plan.json").write_text(json.dumps({"frames": [1.0, 3.0, 5.0]}), encoding="utf-8")
     ig = FakePub("instagram")
     meta = publish.publish_folder(d, Settings(), host=FakeHost(), publishers=[ig])
     assert [u.rsplit("/", 1)[-1] for u in ig.calls[0][0]["slide_urls"]][0] == "slide_01.jpg"
-    assert meta["image_urls"][0].endswith("frame_01.jpg")
+    assert meta["image_urls"][0].endswith("blog_01.jpg")
+
+
+def test_square_fit_is_1080_square_and_keeps_everything():
+    from PIL import Image
+
+    from cardbot.frames import square_fit
+    for size in ((1080, 1920), (1080, 1350), (1376, 768), (1000, 1000)):
+        assert square_fit(Image.new("RGB", size, (200, 30, 30))).size == (1080, 1080)

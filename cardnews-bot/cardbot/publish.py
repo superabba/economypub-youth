@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .bgm import with_credit
 from .config import Settings
-from .frames import capture_frames, frames_of
+from .frames import blog_images_of, capture_frames, frames_of, make_blog_images
 from .hosting import make_host
 from .llm import CardNews, TopicIdea
 from .publishers import make_publishers
@@ -67,14 +67,21 @@ def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, 
     # CC BY 곡의 출처 표기는 영상이 올라가는 곳(인스타 릴스·유튜브)의 설명에만 붙인다. 스레드에는 붙이지 않는다.
     caption = with_credit(caption, folder, 2200)
     reel = folder / "reel.mp4"
-    # 스레드·네이버 블로그에 쓸 이미지는 릴스 영상 캡처(frame_NN.jpg). 영상이 없으면 슬라이드를 쓴다
-    images = frames_of(folder)
-    if not images and reel.exists() and not dry_run:
+    # 이미지 두 벌: 네이버 블로그(루틴 ②)는 정사각형(blog_NN.jpg), 스레드 캐러셀은 릴스 영상 캡처(세로 frame_NN.jpg).
+    # 네이버 피드 썸네일이 정사각형이라 세로 그림을 그대로 올리면 위아래가 잘린다. 영상이 없으면 슬라이드를 쓴다.
+    reel_frames = frames_of(folder)
+    if not reel_frames and reel.exists() and not dry_run:
         try:
-            images = capture_frames(folder)
+            reel_frames = capture_frames(folder)
         except Exception as e:
             log.warning("릴스 장면 캡처 실패, 슬라이드를 대신 씁니다: %s", e)
-    images = images or sorted(folder.glob("slide_*.jpg"))
+    squares = blog_images_of(folder)
+    if not squares and not dry_run:
+        try:
+            squares = make_blog_images(folder)
+        except Exception as e:
+            log.warning("블로그용 정사각형 이미지 만들기 실패, 슬라이드를 대신 씁니다: %s", e)
+    images = squares or sorted(folder.glob("slide_*.jpg"))
 
     if dry_run:
         pubs = publishers if publishers is not None else make_publishers(s)
@@ -88,13 +95,19 @@ def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, 
     meta_path = folder / "published.json"
     save = lambda: meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")  # noqa: E731
 
-    urls = meta.get("image_urls") or []
-    if not urls or not all(u.isascii() for u in urls) or [u.rsplit("/", 1)[-1] for u in urls] != [p.name for p in images]:
+    def stale(urls: list[str], files: list[Path]) -> bool:  # 비ASCII URL은 Meta가 못 가져오고, 파일이 바뀌었으면 다시 올린다
+        return not urls or not all(u.isascii() for u in urls) or [u.rsplit("/", 1)[-1] for u in urls] != [p.name for p in files]
+
+    if stale(meta.get("image_urls") or [], images):
         host = host or make_host(s)
         meta["image_urls"] = host.upload(images, folder.name)
         save()
     pubs = publishers if publishers is not None else make_publishers(s)
     pending = [p for p in pubs if p.name not in meta.get("posts", {})]
+    if any(p.name == "threads" for p in pending) and len(reel_frames) >= 2 and stale(meta.get("threads_image_urls") or [], reel_frames):
+        host = host or make_host(s)
+        meta["threads_image_urls"] = host.upload(reel_frames, folder.name)
+        save()
     if any(getattr(p, "needs_video", False) for p in pending) and not meta.get("video_urls") and reel.exists():
         host = host or make_host(s)
         video_url, cover_url = host.upload([reel, folder / "reel_cover.jpg"], folder.name)
@@ -102,12 +115,12 @@ def publish_folder(folder: Path, s: Settings, dry_run: bool = False, host=None, 
         meta["reel_cover_url"] = cover_url
         save()
     # 인스타 카드 슬라이드(캐러셀)를 다시 켠 경우에만 슬라이드 원본도 올린다 (캡처는 세로 9:16이라 캐러셀 비율이 안 맞는다)
-    if (any(p.name == "instagram" for p in pending) and images and images[0].name.startswith("frame_")
+    if (any(p.name == "instagram" for p in pending) and images and not images[0].name.startswith("slide_")
             and not meta.get("slide_urls")):
         host = host or make_host(s)
         meta["slide_urls"] = host.upload(sorted(folder.glob("slide_*.jpg")), folder.name)
         save()
-    assets = {k: meta.get(k) for k in ("image_urls", "slide_urls", "video_urls", "reel_cover_url")}
+    assets = {k: meta.get(k) for k in ("image_urls", "threads_image_urls", "slide_urls", "video_urls", "reel_cover_url")}
     assets["video_path"] = str(reel) if reel.exists() else None  # 유튜브는 파일을 직접 올린다
     assets["title"] = topic.title
     assets["hashtags"] = caption_hashtags(caption)
