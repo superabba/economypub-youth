@@ -1,0 +1,34 @@
+{
+  "style": "halftone-dossier",
+  "label": "복고 인쇄 사건 파일",
+  "reason": "선착순·회수·제외 등 놓치면 손해 보는 함정을 짚는 주제",
+  "duration": 39.54116666666666,
+  "fps": 30,
+  "rate": "+0%",
+  "frames": [
+    3.49,
+    8.65,
+    14.2,
+    19.49,
+    24.27,
+    28.89,
+    33.44,
+    37.63
+  ],
+  "music": {
+    "mood": "upbeat",
+    "track": "upbeat/revolution-void-effects-of-elevation.m4a",
+    "credit": "🎵 Effects of Elevation - Revolution Void (CC BY 3.0, 편집) http://freemusicarchive.org/music/Revolution_Void/Effects_of_Elevation/Revolution_Void__Effects_of_Elevation"
+  },
+  "narration": [
+    "청년문화예술패스 추가 신청, 11월 30일까지입니다.",
+    "대상은 2006·2007년생이고, 생애 한 번만 지원됩니다.",
+    "서울·경기·인천은 15만 원, 비수도권은 20만 원으로 보도됐습니다.",
+    "시도별 인원만큼 선착순으로 발급해 일찍 마감될 수 있습니다.",
+    "상반기에 받고 쓰지 않아 회수된 경우는 신청할 수 없습니다.",
+    "발급된 포인트는 12월 31일까지 사용해야 합니다.",
+    "서울청년문화패스는 별도 사업이니 따로 확인하세요.",
+    "해당된다면 오늘 공식 누리집에서 확인하세요."
+  ],
+  "cards": []
+}
