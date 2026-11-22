@@ -147,7 +147,8 @@ def test_publish_uses_square_images_for_naver_and_reel_frames_for_threads(tmp_pa
     meta = publish.publish_folder(d, Settings(), host=FakeHost(), publishers=[th])
     # published.json → 네이버 루틴이 읽는 주소: 정사각형 (피드 썸네일이 1:1 이라 세로 그림은 잘린다)
     assert [u.rsplit("/", 1)[-1] for u in meta["image_urls"]] == ["blog_01.jpg", "blog_02.jpg", "blog_03.jpg"]
-    assert all(Image.open(p).size == (1080, 1080) for p in d.glob("blog_*.jpg"))
+    _sz = [Image.open(p).size for p in sorted(d.glob("blog_*.jpg"))]
+    assert _sz[0] == (1080, 1080) and all(z == (1080, 1350) for z in _sz[1:])  # 첫 장 1:1, 나머지 4:5
     # 스레드 캐러셀: 세로 영상 캡처
     assert [u.rsplit("/", 1)[-1] for u in th.calls[0][0]["threads_image_urls"]] == ["frame_01.jpg", "frame_02.jpg", "frame_03.jpg"]
 
@@ -175,3 +176,14 @@ def test_square_fit_is_1080_square_and_keeps_everything():
     from cardbot.frames import square_fit
     for size in ((1080, 1920), (1080, 1350), (1376, 768), (1000, 1000)):
         assert square_fit(Image.new("RGB", size, (200, 30, 30))).size == (1080, 1080)
+
+
+def test_blog_crop_sizes():
+    from PIL import Image, ImageDraw
+    from cardbot.frames import content_crop, hero_crop
+    im = Image.new("RGB", (1080, 1920), (20, 30, 60))
+    d = ImageDraw.Draw(im)
+    for y in range(300, 900, 60):
+        d.rectangle((80, y, 1000, y + 30), fill=(255, 255, 255))
+    assert content_crop(im).size == (1080, 1350)
+    assert hero_crop(im).size == (1080, 1080)
