@@ -1,0 +1,42 @@
+{
+  "image_urls": [
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_01.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_02.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_03.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_04.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_05.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_06.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_07.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/blog_08.jpg"
+  ],
+  "threads_image_urls": [
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_01.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_02.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_03.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_04.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_05.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_06.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_07.jpg",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/frame_08.jpg"
+  ],
+  "video_urls": [
+    "https://cdn.jsdelivr.net/gh/superabba/economypub-youth@8e350af8a4f4883180b98ae708e2e0026021c671/images/8b26c8cb/reel.mp4",
+    "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/reel.mp4"
+  ],
+  "reel_cover_url": "https://raw.githubusercontent.com/superabba/economypub-youth/drafts/images/8b26c8cb/reel_cover.jpg",
+  "posts": {
+    "reels": {
+      "media_id": "18224466919346275",
+      "permalink": "https://www.instagram.com/reel/DgEUCWVhOna/"
+    },
+    "threads": {
+      "media_id": "18025661966936809",
+      "permalink": "https://www.threads.com/@economypub/post/DgEUK0FFbap"
+    },
+    "youtube": {
+      "media_id": "_dk2MKZYXgc",
+      "permalink": "https://youtube.com/shorts/_dk2MKZYXgc"
+    }
+  },
+  "failures": []
+}
