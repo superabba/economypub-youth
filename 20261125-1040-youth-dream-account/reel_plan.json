@@ -1,0 +1,34 @@
+{
+  "style": "news-package",
+  "label": "방송 뉴스 패키지",
+  "reason": "핵심 사실을 방송 뉴스 브리핑처럼 정리하는 주제",
+  "duration": 45.68583333333332,
+  "fps": 30,
+  "rate": "+0%",
+  "frames": [
+    3.68,
+    9.91,
+    16.16,
+    21.68,
+    27.4,
+    32.96,
+    38.98,
+    43.76
+  ],
+  "music": {
+    "mood": "upbeat",
+    "track": "upbeat/chris-zabriskie-air-hockey-saloon.m4a",
+    "credit": "🎵 Air Hockey Saloon - Chris Zabriskie (CC BY 4.0, 편집) http://freemusicarchive.org/music/Chris_Zabriskie/Vendaface/05_-_Air_Hockey_Saloon"
+  },
+  "narration": [
+    "청년 주택드림 청약통장, 가입 전에 확인할 점부터 보겠습니다.",
+    "대상은 만 19세에서 34세 무주택 청년이고, 연소득은 5천만 원 이하입니다.",
+    "월 납입은 2만 원부터 100만 원까지 자유롭게 할 수 있어 월 100만 원이 상한입니다.",
+    "우대금리 최대 4.5퍼센트는 2년 이상 유지해야 적용됩니다.",
+    "이자소득 비과세와 소득공제 안내가 있고, 소득 기준은 따로 확인해야 합니다.",
+    "연계 대출은 1년 이상 가입하고 1천만 원 이상 납입해야 가능합니다.",
+    "정리하면 대상, 기간, 대출 요건 세 가지를 조건 확인하는 것이 중요합니다.",
+    "저장해 두셨다가 가입 전에 대조해 보시기 바랍니다."
+  ],
+  "cards": []
+}
