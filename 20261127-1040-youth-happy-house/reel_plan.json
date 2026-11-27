@@ -1,0 +1,32 @@
+{
+  "style": "blueprint",
+  "label": "청사진 도면",
+  "reason": "요건과 절차를 단계별로 정리하는 주제",
+  "duration": 34.0589375,
+  "fps": 30,
+  "rate": "+0%",
+  "frames": [
+    3.06,
+    7.97,
+    13.09,
+    17.96,
+    22.93,
+    28.12,
+    32.27
+  ],
+  "music": {
+    "mood": "warm",
+    "track": "warm/kevin-macleod-backed-vibes-clean.m4a",
+    "credit": "🎵 Backed Vibes Clean - Kevin MacLeod (CC BY 3.0, 편집) http://freemusicarchive.org/music/Kevin_MacLeod/Jazz_Sampler/Backed_Vibes_Clean_1973"
+  },
+  "narration": [
+    "청년 행복주택, 신청 전에 네 가지만 확인하세요.",
+    "대상은 만 19세에서 39세 미혼 무주택 청년이 기본입니다.",
+    "소득은 도시근로자 월평균소득의 100퍼센트 이하가 기준입니다.",
+    "자산과 자동차 기준도 있으니 모집공고에서 꼭 확인하세요.",
+    "신청은 LH청약플러스 같은 공급기관 공고를 통해 합니다.",
+    "나이, 무주택, 소득, 자산 네 가지를 모두 맞춰야 합니다.",
+    "마이홈포털에서 내 지역 공고를 찾아보세요."
+  ],
+  "cards": []
+}
